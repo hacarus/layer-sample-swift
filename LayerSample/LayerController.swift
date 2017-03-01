@@ -12,14 +12,14 @@ class LayerController: NSObject, LYRClientDelegate {
     
     var layerClient:LYRClient?
     
-    var appID:URL?
+    var authenticationProvider:AuthenticationProvider?
     
     init(_ appID: URL){
         super.init()
         
-        self.appID = appID
-        let layerClient = LYRClient(appID:appID, delegate:self, options:nil)
-        layerClient.connect { (success, error) in
+        self.authenticationProvider = AuthenticationProvider(appID)
+        self.layerClient = LYRClient(appID:appID, delegate:self, options:nil)
+        self.layerClient!.connect { (success, error) in
             if(success){
                 print("Successfully connected to Layer!")
                 self.authenticate()
@@ -27,7 +27,6 @@ class LayerController: NSObject, LYRClientDelegate {
                 print("Failed connection to Layer with error: ")
             }
         }
-        self.layerClient = layerClient
     }
     
     func authenticate(){
@@ -42,13 +41,44 @@ class LayerController: NSObject, LYRClientDelegate {
         })
     }
     
-    // https://github.com/layerhq/Atlas-Messenger-iOS/blob/v0.9.5/Code/ATLMAuthenticationProvider.m
 
     func getIdentityToken(_ nonce: String){
-        let firstName = "Takashi"
-        let lastName = "Someda"
+        self.authenticationProvider?.authenticateWithCredentials(nonce, firstName: "Takashi", lastName: "Someda") { (token, error) in
+            if error != nil {
+                print(error!)
+                return
+            }
+            print("token: \(token!)")
+        }
+    }
+    
+    public func layerClient(_ client: LYRClient, didReceiveAuthenticationChallengeWithNonce nonce: String){
+        self.getIdentityToken(nonce)
+    }
+}
+
+// https://github.com/layerhq/Atlas-Messenger-iOS/blob/v0.9.5/Code/ATLMAuthenticationProvider.m
+class AuthenticationProvider {
+    // https://github.com/layerhq/Atlas-Messenger-iOS/blob/v0.9.5/Code/Utilities/ATLMUtilities.m
+    let identityBaseUrl:URL = URL(string:"https://layer-identity-provider.herokuapp.com")!
+    
+    var urlSession:URLSession
+    
+    var appID:URL
+
+    init(_ appID:URL){
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.httpAdditionalHeaders = [
+            "Accept": "application/json",
+            "X_LAYER_APP_ID": appID.absoluteString
+        ]
+        self.urlSession =  URLSession(configuration: configuration)
+        self.appID = appID
+    }
+    
+    public func authenticateWithCredentials(_ nonce:String, firstName: String, lastName: String, completion: @escaping (String?, NSError?) -> Void) {
         let displayName = String(format:"%@ %@", firstName, lastName)
-        let appUUID = self.appID!.lastPathComponent
+        let appUUID = self.appID.lastPathComponent
         let urlString = String(format:"apps/%@/atlas_identities", appUUID)
         
         let url = URL(string: urlString, relativeTo:identityBaseUrl)
@@ -67,32 +97,31 @@ class LayerController: NSObject, LYRClientDelegate {
             urlRequest.httpBody = try JSONSerialization.data(withJSONObject: parameters, options: JSONSerialization.WritingOptions(rawValue: 0))
             urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
             
-            let configuration = URLSessionConfiguration.ephemeral
-            configuration.httpAdditionalHeaders = [
-                "Accept": "application/json",
-                "X_LAYER_APP_ID": self.appID!.absoluteString
-            ]
-            let session = URLSession(configuration: configuration)
-            
             print(urlRequest)
             
-            session.dataTask(with: urlRequest, completionHandler: { (data, response, error) in
+            self.urlSession.dataTask(with: urlRequest, completionHandler: { (data, response, error) in
                 if response == nil && error != nil {
-                    print("Failed with error: \(error)")
+                    completion(nil, error as! NSError)
                     return
                 }
-                print(data)
+                
+                do{
+                    let jsonObject = try JSONSerialization.jsonObject(with: data!, options: JSONSerialization.ReadingOptions(rawValue:0))
+                    guard let dictionary = jsonObject as? Dictionary<String, Any> else {
+                        return
+                    }
+                    completion(dictionary["identity_token"] as! String, nil)
+                }catch let deserializeError as NSError{
+                    completion(nil, deserializeError)
+                }
             }).resume()
             
         }catch let error as NSError {
-            print("Found an error - \(error)")
+            completion(nil, error)
         }
-        
     }
     
-    
-    public func layerClient(_ client: LYRClient, didReceiveAuthenticationChallengeWithNonce nonce: String){
-        self.getIdentityToken(nonce)
-    }
 }
+
+
 
