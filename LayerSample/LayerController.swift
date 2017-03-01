@@ -33,7 +33,7 @@ class LayerController: NSObject, LYRClientDelegate {
         
         self.layerClient?.requestAuthenticationNonce(completion: { (nonce, error) in
             if error != nil {
-                print(error!)
+                print("Found error: \(error!)")
                 return
             }
             print("nonce: \(nonce!)")
@@ -45,13 +45,24 @@ class LayerController: NSObject, LYRClientDelegate {
     func getIdentityToken(_ nonce: String){
         self.authenticationProvider?.authenticateWithCredentials(nonce, firstName: "Takashi", lastName: "Someda") { (token, error) in
             if error != nil {
-                print(error!)
+                print("Found error: \(error!)")
                 return
             }
             print("token: \(token!)")
+            self.verifyToken(token!)
         }
     }
     
+    func verifyToken(_ token:String) {
+        self.layerClient?.authenticate(withIdentityToken: token, completion: { (authenticatedUser, error) in
+            if error != nil {
+                print("Found error: \(error!)")
+                return
+            }
+            print(authenticatedUser)
+        })
+    }
+
     public func layerClient(_ client: LYRClient, didReceiveAuthenticationChallengeWithNonce nonce: String){
         self.getIdentityToken(nonce)
     }

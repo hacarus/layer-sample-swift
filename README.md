@@ -5,18 +5,24 @@
 * Xcode 8.2.1
 * CocoaPods 1.2.0 ( with Ruby 2.3 )
 
-## Create Atlas Messanger Project in your Layer account
+## Setup Layer.com account
 
-Open the following URL to create "Atlas Messanger" in your Layer account.
-
-* https://developer.layer.com/dashboard/atlas/build
+Sign up to Layer.com from [here](https://developer.layer.com/signup). Then, create "Atlas Messanger" in your Layer account from [Atlas Build](https://developer.layer.com/dashboard/atlas/build).
 
 ## How to run the project
 
-Install dependent libraries by running 
+Install dependent libraries by 
 
 ```
 pod install
 ```
 
-Then open the `LayerSample.xcworkspace` instead of `LayerSample.xcodeproj`
+Then open the `LayerSample.xcworkspace` like this
+
+```
+open -a /Applications/Xcode.app LayerSample.xcworkspace
+```
+
+Change `APP_ID` defined in AppDelegate to the one you can see in your Dashboard. Then, select `Product` and `Run` in Xcode.
+
+You can see the conversation in [Atlas Chat Web Page](https://developer.layer.com/atlas/chat).
