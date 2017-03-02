@@ -23,6 +23,6 @@ Then open the `LayerSample.xcworkspace` like this
 open -a /Applications/Xcode.app LayerSample.xcworkspace
 ```
 
-Change `APP_ID` defined in AppDelegate to the one you can see in your Dashboard. Then, select `Product` and `Run` in Xcode.
+Change `APP_ID` defined in [AppDelegate.swift](https://github.com/hacarus/layer-sample-swift/blob/master/LayerSample/AppDelegate.swift#L14) to the one you can see in your Dashboard. Then, select `Product` and `Run` in Xcode.
 
 You can see the conversation in [Atlas Chat Web Page](https://developer.layer.com/atlas/chat).
