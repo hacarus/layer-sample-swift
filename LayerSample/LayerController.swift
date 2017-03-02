@@ -16,63 +16,65 @@ class LayerController: NSObject, LYRClientDelegate {
     
     override init(){
         super.init()
-        
         let ud = UserDefaults.standard
         let appID = URL(string: ud.string(forKey: "LAYER_APP_ID")!)!
-        
         self.authenticationProvider = AuthenticationProvider(appID)
         self.layerClient = LYRClient(appID:appID, delegate:self, options:nil)
+    }
+
+    public func authenticate(closure: @escaping (LYRIdentity?, Error?)-> Void){
+
         self.layerClient!.connect { (success, error) in
             if(success){
                 print("Successfully connected to Layer!")
-                let authenticatedUser = self.layerClient?.authenticatedUser
+                let authenticatedUser = self.layerClient!.authenticatedUser
                 if authenticatedUser == nil {
-                    self.authenticate()
+                    self.layerClient!.requestAuthenticationNonce { (nonce, error) in
+                        if error != nil {
+                            closure(nil, error!)
+                            return
+                        }
+                        print("nonce: \(nonce!)")
+                        self.retrieveIdentity(nonce!, closure: closure)
+                    }
+
                 }else{
-                    print("user: \(authenticatedUser!)")
+                    closure(authenticatedUser, nil)
                 }
             }else{
                 print("Failed connection to Layer with error: ")
+                closure(nil, error! as NSError?)
             }
         }
     }
     
-    func authenticate(){
-        
-        self.layerClient?.requestAuthenticationNonce(completion: { (nonce, error) in
-            if error != nil {
-                print("Found error: \(error!)")
-                return
-            }
-            print("nonce: \(nonce!)")
-            self.getIdentityToken(nonce!)
-        })
-    }
-    
 
-    func getIdentityToken(_ nonce: String){
-        self.authenticationProvider?.authenticateWithCredentials(nonce, firstName: "Takashi", lastName: "Someda") { (token, error) in
+    func retrieveIdentity(_ nonce: String, closure: @escaping (LYRIdentity?, Error?)-> Void){
+        self.authenticationProvider!.authenticateWithCredentials(nonce, firstName: "Takashi", lastName: "Someda") { (token, error) in
             if error != nil {
-                print("Found error: \(error!)")
+                closure(nil, error!)
                 return
             }
             print("token: \(token!)")
-            self.verifyToken(token!)
+
+            self.layerClient!.authenticate(withIdentityToken: token!) { (authenticatedUser, error) in
+                if error != nil {
+                    closure(nil, error!)
+                    return
+                }
+                closure(authenticatedUser, nil)
+            }
         }
     }
     
-    func verifyToken(_ token:String) {
-        self.layerClient?.authenticate(withIdentityToken: token, completion: { (authenticatedUser, error) in
+    public func layerClient(_ client: LYRClient, didReceiveAuthenticationChallengeWithNonce nonce: String){
+        print("called by protocol")
+        self.retrieveIdentity(nonce) { (authenticatedUser, error) in
             if error != nil {
-                print("Found error: \(error!)")
                 return
             }
-            print(authenticatedUser)
-        })
-    }
-
-    public func layerClient(_ client: LYRClient, didReceiveAuthenticationChallengeWithNonce nonce: String){
-        self.getIdentityToken(nonce)
+            print("user: \(authenticatedUser!)")
+        }
     }
 }
 
@@ -95,7 +97,7 @@ class AuthenticationProvider {
         self.appID = appID
     }
     
-    public func authenticateWithCredentials(_ nonce:String, firstName: String, lastName: String, completion: @escaping (String?, NSError?) -> Void) {
+    public func authenticateWithCredentials(_ nonce:String, firstName: String, lastName: String, completion: @escaping (String?, Error?) -> Void) {
         let displayName = String(format:"%@ %@", firstName, lastName)
         let appUUID = self.appID.lastPathComponent
         let urlString = String(format:"apps/%@/atlas_identities", appUUID)
@@ -120,7 +122,7 @@ class AuthenticationProvider {
             
             self.urlSession.dataTask(with: urlRequest, completionHandler: { (data, response, error) in
                 if response == nil && error != nil {
-                    completion(nil, error as! NSError)
+                    completion(nil, error)
                     return
                 }
                 
@@ -129,8 +131,8 @@ class AuthenticationProvider {
                     guard let dictionary = jsonObject as? Dictionary<String, Any> else {
                         return
                     }
-                    completion(dictionary["identity_token"] as! String, nil)
-                }catch let deserializeError as NSError{
+                    completion(dictionary["identity_token"] as? String, nil)
+                }catch let deserializeError{
                     completion(nil, deserializeError)
                 }
             }).resume()

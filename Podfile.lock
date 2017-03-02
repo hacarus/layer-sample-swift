@@ -1,12 +1,15 @@
 PODS:
+  - Atlas (1.0.31):
+    - LayerKit (>= 0.23.0)
   - LayerKit (0.25.0)
 
 DEPENDENCIES:
-  - LayerKit
+  - Atlas
 
 SPEC CHECKSUMS:
+  Atlas: 291d97b97d9f0be83b40a3ca8529dee77292900c
   LayerKit: 2c92ab1325af22f9f62d00cd1e878903f87eb9b6
 
-PODFILE CHECKSUM: a891f599677accdf400a632f7fdebe53506d84f8
+PODFILE CHECKSUM: 14bdaec2e96d163a2caa33fda4e84e90291ccc36
 
 COCOAPODS: 1.2.0

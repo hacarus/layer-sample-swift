@@ -2,7 +2,7 @@
 
 target 'LayerSample' do
   use_frameworks!
-  pod 'LayerKit'
+  pod 'Atlas'
 end
 
 # Designation swift version for compiler
