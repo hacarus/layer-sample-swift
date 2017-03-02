@@ -37,20 +37,19 @@ class LayerController: NSObject, LYRClientDelegate {
                         print("nonce: \(nonce!)")
                         self.retrieveIdentity(nonce!, closure: closure)
                     }
-
                 }else{
                     closure(authenticatedUser, nil)
                 }
             }else{
                 print("Failed connection to Layer with error: ")
-                closure(nil, error! as NSError?)
+                closure(nil, error!)
             }
         }
     }
     
 
     func retrieveIdentity(_ nonce: String, closure: @escaping (LYRIdentity?, Error?)-> Void){
-        self.authenticationProvider!.authenticateWithCredentials(nonce, firstName: "Takashi", lastName: "Someda") { (token, error) in
+        self.authenticationProvider!.authenticateWithCredentials(nonce, firstName: "Swift", lastName: "Sample") { (token, error) in
             if error != nil {
                 closure(nil, error!)
                 return
