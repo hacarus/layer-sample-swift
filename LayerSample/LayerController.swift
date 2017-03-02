@@ -14,15 +14,23 @@ class LayerController: NSObject, LYRClientDelegate {
     
     var authenticationProvider:AuthenticationProvider?
     
-    init(_ appID: URL){
+    override init(){
         super.init()
+        
+        let ud = UserDefaults.standard
+        let appID = URL(string: ud.string(forKey: "LAYER_APP_ID")!)!
         
         self.authenticationProvider = AuthenticationProvider(appID)
         self.layerClient = LYRClient(appID:appID, delegate:self, options:nil)
         self.layerClient!.connect { (success, error) in
             if(success){
                 print("Successfully connected to Layer!")
-                self.authenticate()
+                let authenticatedUser = self.layerClient?.authenticatedUser
+                if authenticatedUser == nil {
+                    self.authenticate()
+                }else{
+                    print("user: \(authenticatedUser!)")
+                }
             }else{
                 print("Failed connection to Layer with error: ")
             }

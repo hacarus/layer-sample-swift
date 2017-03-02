@@ -15,7 +15,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate{
 
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
-        let _ = LayerController(URL(string: APP_ID)!)
+        let ud = UserDefaults.standard
+        ud.set(APP_ID, forKey: "LAYER_APP_ID")
+        ud.synchronize()
         return true
     }
     
