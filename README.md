@@ -1,6 +1,6 @@
 # Layer.com Swift code sample
 
-Japanese follows English
+( Japanese follows English )
 
 ## Prerequisites
 
@@ -30,6 +30,8 @@ Change `APP_ID` defined in [AppDelegate.swift](https://github.com/hacarus/layer-
 ![Screenshot](https://cacoo.com/diagrams/8fI0WYalDRJGRHHL-F1F4D.png)
 
 You can also see the conversation in [Atlas Chat Web Page](https://developer.layer.com/atlas/chat).
+
+----
 
 # Layer.com Swift サンプル
 
